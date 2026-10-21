@@ -6,3 +6,4 @@ obj/
 artifacts/
 *.zip
 TestResults/
+__pycache__/

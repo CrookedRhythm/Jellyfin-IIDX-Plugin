@@ -1,0 +1,16 @@
+name: "beatmania IIDX"
+guid: "256761b3-5276-49e5-92be-042ab5b5948b"
+version: "1.0.0.0"
+targetAbi: "12.0.0.0"
+framework: "net10.0"
+overview: "Play beatmania IIDX songs with their background movies, straight from the game data"
+description: >
+  Lists every song from the game's music database in a dedicated Jellyfin library and renders
+  the song (keysounds + background movie) on demand when it is played. Game files are only read.
+category: "General"
+owner: "CrookedRhythm"
+artifacts:
+  - "Jellyfin.Plugin.IIDX.dll"
+  - "IIDX.Core.dll"
+changelog: >
+  First release.

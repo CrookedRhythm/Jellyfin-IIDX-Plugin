@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>beatmania IIDX</title>
+</head>
+<body>
+    <div id="IidxConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-select,emby-checkbox">
+        <div data-role="content">
+            <div class="content-primary">
+                <form id="IidxConfigForm">
+                    <div class="verticalSection">
+                        <h2 class="sectionTitle">beatmania IIDX</h2>
+                        <p>Songs are listed from the game's music database and rendered from the original game files when you press play. Renders are kept for a while and then removed again; the game data is never modified.</p>
+                    </div>
+
+                    <h3>Game data</h3>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="GamePath">Game data folder</label>
+                        <input id="GamePath" name="GamePath" type="text" is="emby-input" required />
+                        <div class="fieldDescription">The game's <code>contents</code> folder (the one holding <code>data</code> and optionally <code>data_mods</code>), as the Jellyfin server sees it. In Docker this is the path inside the container.</div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="MusicDataPath">music_data.bin (optional)</label>
+                        <input id="MusicDataPath" name="MusicDataPath" type="text" is="emby-input" />
+                        <div class="fieldDescription">Leave empty to use the newest <code>music_data.bin</code> in <code>data/info/0</code> or <code>data/info/1</code>.</div>
+                    </div>
+                    <div>
+                        <button is="emby-button" type="button" class="raised button-alt block" id="IidxCheck"><span>Check game data</span></button>
+                        <div class="fieldDescription" id="IidxCheckResult"></div>
+                    </div>
+
+                    <h3>Library</h3>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="LibraryName">Library name</label>
+                        <input id="LibraryName" name="LibraryName" type="text" is="emby-input" />
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="LibraryPath">Library folder (optional)</label>
+                        <input id="LibraryPath" name="LibraryPath" type="text" is="emby-input" />
+                        <div class="fieldDescription">Holds song metadata, thumbnails, small placeholder files and the temporary renders. Empty uses <code>&lt;jellyfin data&gt;/iidx/library</code>.</div>
+                    </div>
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input id="CreateLibrary" name="CreateLibrary" type="checkbox" is="emby-checkbox" />
+                            <span>Create the Jellyfin library automatically</span>
+                        </label>
+                    </div>
+                    <div class="selectContainer">
+                        <label class="selectLabel" for="RatingChart">Rating shows the level of</label>
+                        <select is="emby-select" id="RatingChart" name="RatingChart" class="emby-select-withcolor emby-select">
+                            <option value="SPA">SP ANOTHER</option>
+                            <option value="SPH">SP HYPER</option>
+                            <option value="SPN">SP NORMAL</option>
+                            <option value="SPL">SP LEGGENDARIA</option>
+                            <option value="MAXSP">Hardest SP chart</option>
+                            <option value="DPA">DP ANOTHER</option>
+                            <option value="MAXDP">Hardest DP chart</option>
+                            <option value="NONE">Nothing</option>
+                        </select>
+                        <div class="fieldDescription">Lets you sort the library by difficulty (sort by community rating).</div>
+                    </div>
+
+                    <h3>Playback cache</h3>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="CacheTtlMinutes">Keep renders for (minutes after last play)</label>
+                        <input id="CacheTtlMinutes" name="CacheTtlMinutes" type="number" min="5" is="emby-input" />
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="CacheMaxMegabytes">Cache size limit (MB, 0 = unlimited)</label>
+                        <input id="CacheMaxMegabytes" name="CacheMaxMegabytes" type="number" min="0" is="emby-input" />
+                    </div>
+                    <div>
+                        <button is="emby-button" type="button" class="raised button-alt block" id="IidxClear"><span>Clear cache now</span></button>
+                        <div class="fieldDescription" id="IidxStatus"></div>
+                    </div>
+
+                    <h3>Rendering</h3>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="ChartPreference">Chart to render (first one that exists)</label>
+                        <input id="ChartPreference" name="ChartPreference" type="text" is="emby-input" />
+                        <div class="fieldDescription">Comma separated: SPB, SPN, SPH, SPA, SPL, DPB, DPN, DPH, DPA, DPL.</div>
+                    </div>
+                    <div class="selectContainer">
+                        <label class="selectLabel" for="AudioCodec">Audio</label>
+                        <select is="emby-select" id="AudioCodec" name="AudioCodec" class="emby-select-withcolor emby-select">
+                            <option value="flac">FLAC (lossless; playback starts fastest)</option>
+                            <option value="aac">AAC (for clients that cannot play FLAC; first play takes longer)</option>
+                        </select>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="AudioBitrateKbps">AAC bitrate (kbps)</label>
+                        <input id="AudioBitrateKbps" name="AudioBitrateKbps" type="number" min="96" max="512" is="emby-input" />
+                    </div>
+                    <div class="checkboxContainer">
+                        <label class="emby-checkbox-label">
+                            <input id="CopyVideoWhenPossible" name="CopyVideoWhenPossible" type="checkbox" is="emby-checkbox" />
+                            <span>Copy H.264/HEVC movies without re-encoding (much faster)</span>
+                        </label>
+                    </div>
+                    <div class="checkboxContainer">
+                        <label class="emby-checkbox-label">
+                            <input id="LoopShortMovies" name="LoopShortMovies" type="checkbox" is="emby-checkbox" />
+                            <span>Loop movies that are shorter than the song</span>
+                        </label>
+                    </div>
+                    <div class="checkboxContainer">
+                        <label class="emby-checkbox-label">
+                            <input id="IncludeBgm" name="IncludeBgm" type="checkbox" is="emby-checkbox" />
+                            <span>Include background (non-note) keysounds</span>
+                        </label>
+                    </div>
+                    <div class="checkboxContainer">
+                        <label class="emby-checkbox-label">
+                            <input id="CutRetriggeredSamples" name="CutRetriggeredSamples" type="checkbox" is="emby-checkbox" />
+                            <span>Cut a keysound when it is triggered again</span>
+                        </label>
+                    </div>
+                    <div class="selectContainer">
+                        <label class="selectLabel" for="BgaDelayUnit">Movie offset (bga_delay) unit</label>
+                        <select is="emby-select" id="BgaDelayUnit" name="BgaDelayUnit" class="emby-select-withcolor emby-select">
+                            <option value="ms">Milliseconds</option>
+                            <option value="frames">Frames (1/60 s)</option>
+                        </select>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="VideoCrf">Video quality when re-encoding (CRF)</label>
+                        <input id="VideoCrf" name="VideoCrf" type="number" min="0" max="51" is="emby-input" />
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="IndexParallelism">Songs processed at once while indexing</label>
+                        <input id="IndexParallelism" name="IndexParallelism" type="number" min="1" max="16" is="emby-input" />
+                    </div>
+
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block emby-button"><span>Save</span></button>
+                        <button is="emby-button" type="button" class="raised block" id="IidxIndex"><span>Save and update library now</span></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script type="text/javascript">
+            (function () {
+                var pluginId = '256761b3-5276-49e5-92be-042ab5b5948b';
+                var page = document.querySelector('#IidxConfigPage');
+                var text = ['GamePath', 'MusicDataPath', 'LibraryName', 'LibraryPath', 'ChartPreference', 'CacheTtlMinutes', 'CacheMaxMegabytes', 'AudioBitrateKbps', 'VideoCrf', 'IndexParallelism'];
+                var numbers = ['CacheTtlMinutes', 'CacheMaxMegabytes', 'AudioBitrateKbps', 'VideoCrf', 'IndexParallelism'];
+                var selects = ['RatingChart', 'AudioCodec', 'BgaDelayUnit'];
+                var checks = ['CreateLibrary', 'CopyVideoWhenPossible', 'LoopShortMovies', 'IncludeBgm', 'CutRetriggeredSamples'];
+
+                function el(id) { return page.querySelector('#' + id); }
+
+                function showStatus() {
+                    ApiClient.fetch({ url: ApiClient.getUrl('IIDX/Status'), type: 'GET', dataType: 'json' }).then(function (s) {
+                        el('IidxStatus').textContent = s.songs + ' songs indexed, ' + s.rendered + ' rendered (' + (s.renderedBytes / 1048576).toFixed(0) + ' MB). Library folder: ' + s.libraryPath;
+                    });
+                }
+
+                function save() {
+                    Dashboard.showLoadingMsg();
+                    return ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        text.forEach(function (k) { config[k] = numbers.indexOf(k) >= 0 ? parseInt(el(k).value || '0', 10) : el(k).value; });
+                        selects.forEach(function (k) { config[k] = el(k).value; });
+                        checks.forEach(function (k) { config[k] = el(k).checked; });
+                        return ApiClient.updatePluginConfiguration(pluginId, config);
+                    }).then(function (result) {
+                        Dashboard.processPluginConfigurationUpdateResult(result);
+                        showStatus();
+                    });
+                }
+
+                page.addEventListener('pageshow', function () {
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        text.forEach(function (k) { el(k).value = config[k] === undefined || config[k] === null ? '' : config[k]; });
+                        selects.forEach(function (k) { el(k).value = config[k]; });
+                        checks.forEach(function (k) { el(k).checked = !!config[k]; });
+                        Dashboard.hideLoadingMsg();
+                        showStatus();
+                    });
+                });
+
+                el('IidxConfigForm').addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    save();
+                    return false;
+                });
+
+                el('IidxIndex').addEventListener('click', function () {
+                    save().then(function () {
+                        return ApiClient.fetch({ url: ApiClient.getUrl('IIDX/Index'), type: 'POST' });
+                    }).then(function () {
+                        Dashboard.alert('Library update started. Progress is shown under Dashboard > Scheduled Tasks.');
+                    });
+                });
+
+                el('IidxCheck').addEventListener('click', function () {
+                    el('IidxCheckResult').textContent = 'Checking...';
+                    save().then(function () {
+                        return ApiClient.fetch({ url: ApiClient.getUrl('IIDX/Inspect'), type: 'GET', dataType: 'json' });
+                    }).then(function (r) {
+                        el('IidxCheckResult').textContent = r.ok
+                            ? 'Found ' + r.musicData + ' (data version ' + r.dataVersion + '): ' + r.entries + ' entries, ' + r.withCharts + ' with chart data, ' + r.withMovies + ' with movies.'
+                              + (r.unreadable ? ' ' + r.unreadable + ' songs could not be read (see the server log), for example: ' + r.firstUnreadable : '')
+                            : r.message;
+                    }, function () {
+                        el('IidxCheckResult').textContent = 'Check failed; see the server log.';
+                    });
+                });
+
+                el('IidxClear').addEventListener('click', function () {
+                    ApiClient.fetch({ url: ApiClient.getUrl('IIDX/ClearCache'), type: 'POST', dataType: 'json' }).then(function (r) {
+                        Dashboard.alert(r.released + ' renders released.');
+                        showStatus();
+                    });
+                });
+            })();
+        </script>
+    </div>
+</body>
+</html>

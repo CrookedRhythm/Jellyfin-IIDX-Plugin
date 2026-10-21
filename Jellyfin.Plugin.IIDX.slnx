@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/IIDX.Cli/IIDX.Cli.csproj" />
+    <Project Path="src/IIDX.Core/IIDX.Core.csproj" />
+    <Project Path="src/Jellyfin.Plugin.IIDX/Jellyfin.Plugin.IIDX.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/IIDX.Core.Tests/IIDX.Core.Tests.csproj" />
+  </Folder>
+</Solution>
