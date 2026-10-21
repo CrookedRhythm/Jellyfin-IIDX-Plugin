@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using IIDX.Core.Formats;
 
 namespace IIDX.Core.Library;
@@ -177,25 +178,60 @@ public sealed class GameDataLocator
             ?? list.FirstOrDefault(f => f.EndsWith(".2dx", StringComparison.OrdinalIgnoreCase) && !f.Contains("_pre", StringComparison.OrdinalIgnoreCase));
     }
 
-    private string? FindMusicData()
+    /// <summary>
+    /// Picks the newest music database from <paramref name="candidates"/>. Game updates write the new
+    /// file into data/info/0 or data/info/1 in turn, keeping the previous one, so the folder alone does
+    /// not say which is current. Newest means the highest data version, then the most songs, then the
+    /// latest write time.
+    /// </summary>
+    public static string? PickNewestMusicData(IEnumerable<string> candidates)
     {
-        foreach (var root in _dataRoots)
+        return candidates
+            .Select(p => (Path: p, Header: ReadMusicDataHeader(p)))
+            .Where(c => c.Header != null)
+            .OrderByDescending(c => c.Header!.Value.Version)
+            .ThenByDescending(c => c.Header!.Value.Count)
+            .ThenByDescending(c => File.GetLastWriteTimeUtc(c.Path))
+            .ThenBy(c => c.Path, StringComparer.Ordinal)
+            .Select(c => c.Path)
+            .FirstOrDefault();
+    }
+
+    private static (uint Version, ushort Count)? ReadMusicDataHeader(string path)
+    {
+        try
         {
-            foreach (var candidate in new[] { Path.Combine(root, "info", "0", "music_data.bin"), Path.Combine(root, "info", "music_data.bin") })
+            Span<byte> header = stackalloc byte[10];
+            using var fs = File.OpenRead(path);
+            if (fs.ReadAtLeast(header, header.Length, throwOnEndOfStream: false) < header.Length || header[0] != 'I' || header[1] != 'I' || header[2] != 'D' || header[3] != 'X')
             {
-                if (File.Exists(candidate))
-                {
-                    return candidate;
-                }
+                return null;
             }
 
+            return (BinaryPrimitives.ReadUInt32LittleEndian(header[4..]), BinaryPrimitives.ReadUInt16LittleEndian(header[8..]));
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    private string? FindMusicData()
+    {
+        // data_mods roots come first and win over data even when data holds a newer file.
+        foreach (var root in _dataRoots)
+        {
             var info = Path.Combine(root, "info");
             if (Directory.Exists(info))
             {
-                var any = Directory.EnumerateFiles(info, "music_data.bin", SearchOption.AllDirectories).OrderBy(p => p, StringComparer.Ordinal).FirstOrDefault();
-                if (any != null)
+                var newest = PickNewestMusicData(Directory.EnumerateFiles(info, "music_data.bin", SearchOption.AllDirectories));
+                if (newest != null)
                 {
-                    return any;
+                    return newest;
                 }
             }
         }

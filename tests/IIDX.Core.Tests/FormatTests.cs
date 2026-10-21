@@ -123,4 +123,43 @@ public class FormatTests
             Assert.Equal(expected, (short)Math.Round(clip.Samples[i] * 32768f));
         }
     }
+
+    [Fact]
+    public void LocatorUsesNewestMusicDataOfInfo0AndInfo1()
+    {
+        var game = Directory.CreateTempSubdirectory("iidx-game-");
+        try
+        {
+            var current = File.ReadAllBytes(Fixture("music_data_v33.bin"));
+            var previous = (byte[])current.Clone();
+            BinaryPrimitives.WriteUInt16LittleEndian(previous.AsSpan(8), (ushort)(BinaryPrimitives.ReadUInt16LittleEndian(current.AsSpan(8)) - 1));
+
+            string Write(string folder, byte[] data)
+            {
+                var dir = Directory.CreateDirectory(Path.Combine(game.FullName, "data", "info", folder));
+                var path = Path.Combine(dir.FullName, "music_data.bin");
+                File.WriteAllBytes(path, data);
+                return path;
+            }
+
+            // The previous file sits in 0 and is even the more recently written one; the song count wins.
+            var newer = Write("1", current);
+            var older = Write("0", previous);
+            File.SetLastWriteTimeUtc(newer, DateTime.UtcNow.AddDays(-1));
+            Assert.Equal(newer, new IIDX.Core.Library.GameDataLocator(game.FullName, null).MusicDataPath);
+
+            // Same version and song count: the later write time wins.
+            File.WriteAllBytes(older, current);
+            File.SetLastWriteTimeUtc(older, DateTime.UtcNow);
+            Assert.Equal(older, IIDX.Core.Library.GameDataLocator.PickNewestMusicData([newer, older]));
+
+            // Files that are not a music database are ignored.
+            File.WriteAllBytes(older, [1, 2, 3]);
+            Assert.Equal(newer, IIDX.Core.Library.GameDataLocator.PickNewestMusicData([older, newer]));
+        }
+        finally
+        {
+            game.Delete(true);
+        }
+    }
 }

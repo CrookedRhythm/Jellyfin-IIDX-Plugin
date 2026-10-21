@@ -11,7 +11,7 @@ Supported game data:
 
 | What | Formats |
 | --- | --- |
-| Music database | `music_data.bin` data versions 20 (tricoro) to 33 (Sparkle Shower) and INFINITAS (80). Newer versions are read with the latest known layout; the entry size is measured from the file, so versions that append fields still parse. |
+| Music database | `music_data.bin` data versions 20 (tricoro) to 33 (Sparkle Shower) and INFINITAS (80). Newer versions are read with the latest known layout; the entry size is measured from the file, so versions that append fields still parse. The game keeps the previous file in `data/info/0` or `data/info/1`; the newer one (data version, then song count, then file date) is used. |
 | Charts | `.1` (SP/DP BEGINNER, NORMAL, HYPER, ANOTHER, LEGGENDARIA) |
 | Keysounds | `.s3p` (WMA), `.2dx` (MS-ADPCM or PCM WAV) |
 | Packaging | per-song `data/sound/<id>.ifs` archives or extracted `data/sound/<id>/` folders; `data_mods/*` (omnimix etc.) overrides `data` |
