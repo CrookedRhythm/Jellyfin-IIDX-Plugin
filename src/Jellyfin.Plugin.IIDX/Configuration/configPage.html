@@ -201,6 +201,7 @@
                     }).then(function (r) {
                         el('IidxCheckResult').textContent = r.ok
                             ? 'Found ' + r.musicData + ' (data version ' + r.dataVersion + '): ' + r.entries + ' entries, ' + r.withCharts + ' with chart data, ' + r.withMovies + ' with movies.'
+                              + (r.unreadable ? ' ' + r.unreadable + ' songs could not be read (see the server log), for example: ' + r.firstUnreadable : '')
                             : r.message;
                     }, function () {
                         el('IidxCheckResult').textContent = 'Check failed; see the server log.';

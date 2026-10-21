@@ -36,8 +36,12 @@ switch (command)
     case "inspect":
     {
         var lib = new IidxLibrary(Settings(), logger);
-        var (db, path, charts, movies) = await lib.InspectAsync(CancellationToken.None);
-        Console.WriteLine($"{path}: version {db.DataVersion}, {db.Songs.Count} entries, {charts} with chart data, {movies} with movies");
+        var r = await lib.InspectAsync(CancellationToken.None);
+        Console.WriteLine($"{r.MusicDataPath}: version {r.Db.DataVersion}, {r.Db.Songs.Count} entries, {r.WithCharts} with chart data, {r.WithMovies} with movies, {r.Unreadable.Count} unreadable");
+        foreach (var u in r.Unreadable)
+        {
+            Console.WriteLine("  " + u);
+        }
         break;
     }
 

@@ -162,4 +162,15 @@ public class FormatTests
             game.Delete(true);
         }
     }
+
+    [Fact]
+    public void UnreadableIfsNamesTheFileAndItsFirstBytes()
+    {
+        var path = Path.Combine(Directory.CreateTempSubdirectory("iidx-ifs-").FullName, "01000.ifs");
+        File.WriteAllBytes(path, [0xDE, 0xAD, 0xBE, 0xEF, 1, 2]);
+        var ex = Assert.Throws<InvalidDataException>(() => IfsArchive.Open(path));
+        Assert.Contains(path, ex.Message, StringComparison.Ordinal);
+        Assert.Contains("DEADBEEF0102", ex.Message, StringComparison.Ordinal);
+        File.Delete(path);
+    }
 }

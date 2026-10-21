@@ -36,17 +36,19 @@ public class IidxController : ControllerBase
 
         try
         {
-            var (db, path, charts, movies) = await lib.InspectAsync(ct).ConfigureAwait(false);
+            var r = await lib.InspectAsync(ct).ConfigureAwait(false);
             return Ok(new
             {
                 ok = true,
-                musicData = path,
-                dataVersion = db.DataVersion,
-                entries = db.Songs.Count,
-                withCharts = charts,
-                withMovies = movies,
-                entrySize = db.EntrySize,
-                knownEntrySize = db.KnownEntrySize,
+                musicData = r.MusicDataPath,
+                dataVersion = r.Db.DataVersion,
+                entries = r.Db.Songs.Count,
+                withCharts = r.WithCharts,
+                withMovies = r.WithMovies,
+                unreadable = r.Unreadable.Count,
+                firstUnreadable = r.Unreadable.FirstOrDefault(),
+                entrySize = r.Db.EntrySize,
+                knownEntrySize = r.Db.KnownEntrySize,
             });
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or NotSupportedException or UnauthorizedAccessException)

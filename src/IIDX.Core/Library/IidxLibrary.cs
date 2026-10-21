@@ -48,6 +48,9 @@ public sealed class SongState
     public int PlaceholderVersion { get; set; }
 }
 
+/// <summary>What <see cref="IidxLibrary.InspectAsync"/> found. Unreadable lists the songs whose data could not be read.</summary>
+public sealed record InspectReport(MusicDatabase Db, string MusicDataPath, int WithCharts, int WithMovies, IReadOnlyList<string> Unreadable);
+
 public sealed record IndexReport(int Total, int Indexed, int Skipped, int Removed, IReadOnlyList<string> Failures, TimeSpan Elapsed)
 {
     public override string ToString() =>
@@ -132,15 +135,25 @@ public sealed partial class IidxLibrary
     }
 
     /// <summary>Loads the music database and reports what it contains, without writing anything.</summary>
-    public async Task<(MusicDatabase Db, string MusicDataPath, int WithCharts, int WithMovies)> InspectAsync(CancellationToken ct)
+    public async Task<InspectReport> InspectAsync(CancellationToken ct)
     {
         var catalog = await GetCatalogAsync(true, ct).ConfigureAwait(false);
         int charts = 0, movies = 0;
+        var unreadable = new List<string>();
         foreach (var song in catalog.Songs)
         {
-            if (catalog.Locator.FindSong(song) != null)
+            ct.ThrowIfCancellationRequested();
+            try
             {
-                charts++;
+                if (catalog.Locator.FindSong(song) != null)
+                {
+                    charts++;
+                }
+            }
+            catch (Exception ex) when (ex is InvalidDataException or IOException or NotSupportedException or UnauthorizedAccessException)
+            {
+                _logger.LogWarning("Cannot read the data of IIDX song {Id}: {Message}", song.SongId, ex.Message);
+                unreadable.Add(ex.Message);
             }
 
             if (catalog.Locator.FindMovie(song) != null)
@@ -149,7 +162,7 @@ public sealed partial class IidxLibrary
             }
         }
 
-        return (catalog.Db, catalog.Locator.MusicDataPath, charts, movies);
+        return new InspectReport(catalog.Db, catalog.Locator.MusicDataPath, charts, movies, unreadable);
     }
 
     /// <summary>Writes or refreshes every song folder. Game data is only read.</summary>

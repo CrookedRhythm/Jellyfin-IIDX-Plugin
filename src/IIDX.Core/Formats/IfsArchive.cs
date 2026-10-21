@@ -22,10 +22,13 @@ public sealed class IfsArchive : IDisposable
     {
         _stream = stream;
         Span<byte> header = stackalloc byte[36];
-        stream.ReadExactly(header[..20]);
-        if (BinaryPrimitives.ReadUInt32BigEndian(header) != Signature)
+        int read = stream.ReadAtLeast(header[..20], 20, throwOnEndOfStream: false);
+        if (read < 20 || BinaryPrimitives.ReadUInt32BigEndian(header) != Signature)
         {
-            throw new InvalidDataException("Not an IFS archive");
+            // Name the file and show how it starts, so an unexpected variant can be identified from the log.
+            throw new InvalidDataException(string.Create(
+                CultureInfo.InvariantCulture,
+                $"Not an IFS archive: {stream.Name} ({stream.Length} bytes, starts with {(read == 0 ? "nothing" : Convert.ToHexString(header[..Math.Min(read, 16)]))})"));
         }
 
         ushort flags = BinaryPrimitives.ReadUInt16BigEndian(header[4..]);
@@ -46,8 +49,19 @@ public sealed class IfsArchive : IDisposable
     /// <summary>Gets the paths of all files in the archive, using '/' as the separator.</summary>
     public IReadOnlyCollection<string> Files => _files.Keys;
 
-    public static IfsArchive Open(string path) =>
-        new(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 16, FileOptions.RandomAccess));
+    public static IfsArchive Open(string path)
+    {
+        var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 16, FileOptions.RandomAccess);
+        try
+        {
+            return new IfsArchive(stream);
+        }
+        catch
+        {
+            stream.Dispose();
+            throw;
+        }
+    }
 
     public bool Contains(string path) => _files.ContainsKey(path);
 

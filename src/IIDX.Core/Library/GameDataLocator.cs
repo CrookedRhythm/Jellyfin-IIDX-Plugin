@@ -103,6 +103,10 @@ public sealed class GameDataLocator
 
     public IReadOnlyList<string> DataRoots => _dataRoots;
 
+    /// <summary>
+    /// Finds the chart and keysounds of a song, or null when it has none. A song archive that cannot
+    /// be read throws <see cref="InvalidDataException"/> or <see cref="IOException"/>.
+    /// </summary>
     public SongSource? FindSong(SongEntry song)
     {
         string id = song.FileId;
